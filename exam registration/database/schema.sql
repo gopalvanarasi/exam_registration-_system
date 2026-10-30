@@ -1,0 +1,60 @@
+CREATE DATABASE IF NOT EXISTS exam_registration
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE exam_registration;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('student', 'admin') NOT NULL DEFAULT 'student',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS students (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL UNIQUE,
+  roll_no VARCHAR(40) NOT NULL UNIQUE,
+  course VARCHAR(100) NOT NULL,
+  semester TINYINT UNSIGNED NOT NULL,
+  phone VARCHAR(20),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS exams (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  exam_code VARCHAR(30) NOT NULL UNIQUE,
+  title VARCHAR(150) NOT NULL,
+  course VARCHAR(100) NOT NULL,
+  semester TINYINT UNSIGNED NOT NULL,
+  exam_date DATE NOT NULL,
+  exam_time TIME NOT NULL,
+  venue VARCHAR(150) NOT NULL,
+  registration_open TINYINT(1) NOT NULL DEFAULT 1,
+  created_by INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS registrations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  registration_no VARCHAR(40) NOT NULL UNIQUE,
+  student_id INT NOT NULL,
+  exam_id INT NOT NULL,
+  status ENUM('Pending', 'Approved', 'Rejected') NOT NULL DEFAULT 'Pending',
+  applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  reviewed_at TIMESTAMP NULL,
+  reviewed_by INT NULL,
+  UNIQUE KEY unique_student_exam (student_id, exam_id),
+  FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+  FOREIGN KEY (exam_id) REFERENCES exams(id) ON DELETE CASCADE,
+  FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS hall_tickets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  registration_id INT NOT NULL UNIQUE,
+  ticket_no VARCHAR(40) NOT NULL UNIQUE,
+  generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (registration_id) REFERENCES registrations(id) ON DELETE CASCADE
+);
